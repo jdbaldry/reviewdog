@@ -21,8 +21,10 @@ import (
 	"github.com/reviewdog/reviewdog/service/serviceutil"
 )
 
-var _ reviewdog.CommentService = (*PullRequest)(nil)
-var _ reviewdog.DiffService = (*PullRequest)(nil)
+var (
+	_ reviewdog.CommentService = (*PullRequest)(nil)
+	_ reviewdog.DiffService    = (*PullRequest)(nil)
+)
 
 const maxCommentsPerRequest = 30
 
@@ -328,7 +330,8 @@ func (g *PullRequest) comment(ctx context.Context) ([]*github.PullRequestComment
 }
 
 func listAllPullRequestsComments(ctx context.Context, cli *github.Client,
-	owner, repo string, pr int, opts *github.PullRequestListCommentsOptions) ([]*github.PullRequestComment, error) {
+	owner, repo string, pr int, opts *github.PullRequestListCommentsOptions,
+) ([]*github.PullRequestComment, error) {
 	comments, resp, err := cli.PullRequests.ListComments(ctx, owner, repo, pr, opts)
 	if err != nil {
 		return nil, err
@@ -396,6 +399,7 @@ func buildSingleSuggestion(c *reviewdog.Comment, s *rdf.Suggestion) (string, err
 	commentutil.WriteCodeFence(&sb, backticks)
 	sb.WriteString("suggestion\n")
 	if txt != "" {
+		fmt.Printf("txt: %q\n", txt)
 		sb.WriteString(txt)
 		sb.WriteString("\n")
 	}
