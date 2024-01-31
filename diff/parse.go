@@ -94,6 +94,16 @@ func (p *fileParser) Parse() (*FileDiff, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	for _, hunk := range fd.Hunks {
+		if hunk.NoNewlineAtEndOfFileOld {
+			fd.NoNewlineAtEndOfFileOld = true
+		}
+
+		if hunk.NoNewlineAtEndOfFileNew {
+			fd.NoNewlineAtEndOfFileNew = true
+		}
+	}
 	return fd, nil
 }
 
@@ -287,7 +297,14 @@ endhunk:
 			}
 			hunk.Lines = append(hunk.Lines, line)
 		case tokenNoNewlineAtEOF:
-			// skip \ No newline at end of file. just consume line
+			if hunk.Lines[len(hunk.Lines)-1].Type == LineAdded {
+				hunk.NoNewlineAtEndOfFileNew = true
+			}
+
+			if hunk.Lines[len(hunk.Lines)-1].Type == LineDeleted {
+				hunk.NoNewlineAtEndOfFileOld = true
+			}
+
 			readline(p.r)
 		default:
 			break endhunk

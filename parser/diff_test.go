@@ -5,7 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/reviewdog/reviewdog/proto/rdf"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -162,4 +166,66 @@ func ExampleDiffParser() {
 	//   ],
 	//   "originalOutput": "gofmt.go:19:-type s struct { A int }"
 	// }
+}
+
+func TestAddTrailingNewlineSuggestion(t *testing.T) {
+	t.Parallel()
+
+	const addNewlineDiff = `diff --git a/wantnewline.txt b/wantnewline.txt
+index ea74bcd..fd772f0 100644
+--- a/wantnewline.txt
++++ b/wantnewline.txt
+@@ -1 +1 @@
+-No newline at end of the old file but it is present in the new file
+\ No newline at end of file
++No newline at end of the old file but it is present in the new file
+`
+
+	const strip = 1
+
+	p := NewDiffParser(strip)
+	want := []*rdf.Diagnostic{
+		{
+			Location: &rdf.Location{
+				Path: "wantnewline.txt",
+				Range: &rdf.Range{
+					Start: &rdf.Position{
+						Line:   1,
+						Column: 0,
+					},
+					End: &rdf.Position{
+						Line:   1,
+						Column: 0,
+					},
+				},
+			},
+			Suggestions: []*rdf.Suggestion{
+				{
+					Text: "No newline at end of the old file but it is present in the new file\n",
+					Range: &rdf.Range{
+						Start: &rdf.Position{
+							Line:   1,
+							Column: 0,
+						},
+						End: &rdf.Position{
+							Line:   1,
+							Column: 0,
+						},
+					},
+				},
+			},
+			OriginalOutput: "wantnewline.txt:1:-No newline at end of the old file but it is present in the new file\nwantnewline.txt:1:+No newline at end of the old file but it is present in the new file\n",
+		},
+	}
+
+	got, err := p.Parse(strings.NewReader(addNewlineDiff))
+	if err != nil {
+		t.Fatalf("%s unexpected error: %v", t.Name(), err)
+	}
+
+	ignoreUnexported := cmpopts.IgnoreUnexported(rdf.Diagnostic{}, rdf.Location{}, rdf.Range{}, rdf.Position{}, rdf.Suggestion{})
+
+	if diff := cmp.Diff(want, got, ignoreUnexported); diff != "" {
+		t.Errorf("%s mismatch (-want +got):\n%s", t.Name(), diff)
+	}
 }

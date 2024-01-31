@@ -104,6 +104,12 @@ func (p *DiffParser) Parse(r io.Reader) ([]*rdf.Diagnostic, error) {
 				}
 				prevState = diffLine.Type
 			}
+
+			if fdiff.NoNewlineAtEndOfFileOld && !fdiff.NoNewlineAtEndOfFileNew {
+				state.newLines = append(state.newLines, "")
+				state.originalLines = append(state.originalLines, "")
+			}
+
 			if state.startLine > 0 {
 				emit() // Output a diagnostic at the end of hunk.
 			}
