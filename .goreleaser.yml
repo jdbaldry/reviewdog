@@ -35,16 +35,6 @@ archives:
       - LICENSE
       - README.md
 
-brews:
-  - repository:
-      owner: reviewdog
-      name: homebrew-tap
-    folder: Formula
-    homepage: https://github.com/reviewdog/reviewdog
-    description: Automated code review tool integrated with any code analysis tools regardless of programming language.
-    test: |
-      system "#{bin}/reviewdog -version"
-
 checksum:
   name_template: "checksums.txt"
 
@@ -58,3 +48,8 @@ changelog:
       - "^docs:"
       - "^test:"
       - "^chore"
+
+release:
+  github:
+    owner: jdbaldry
+    name: reviewdog
